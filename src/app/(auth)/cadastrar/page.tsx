@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/auth/AuthForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Criar conta",
   description:
