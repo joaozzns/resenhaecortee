@@ -20,7 +20,7 @@ export default async function AdminLayout({
       <Header />
       <main className="flex-1 pt-32 md:pt-40 pb-24 font-ios">
         <div className="container-x">
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
             <aside className="lg:col-span-3">
               <AdminSidebar loyaltyEnabled={loyaltyEnabled} />
             </aside>

@@ -44,9 +44,15 @@ export function AdminSidebar({
       aria-label="Painel"
       className="lg:sticky lg:top-28 rounded-[var(--radius-lg)] border border-border bg-surface p-3 lg:p-4"
     >
-      <p className="px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-accent">
-        Painel da equipe
-      </p>
+      <header className="flex items-center gap-2 px-3 pb-3 mb-1 border-b border-border lg:border-0 lg:pb-0 lg:mb-0 lg:py-1">
+        <UsersRound
+          className="h-4 w-4 text-accent shrink-0 lg:hidden"
+          aria-hidden
+        />
+        <p className="font-semibold text-sm lg:text-[10px] uppercase tracking-[0.22em] text-accent">
+          Painel da equipe
+        </p>
+      </header>
       <ul className="mt-2 grid grid-cols-2 lg:grid-cols-1 gap-1">
         {items.map(({ href, label, Icon }) => {
           const active =
