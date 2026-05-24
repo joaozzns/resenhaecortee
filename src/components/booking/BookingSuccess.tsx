@@ -177,8 +177,8 @@ export function BookingSuccess({
         </p>
       )}
 
-      <div className="flex items-center justify-center gap-4 text-sm">
-        <Button asChild variant="primary" size="md">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-sm">
+        <Button asChild variant="primary" size="md" className="w-full sm:w-auto">
           <Link href="/minha-conta/agendamentos">
             Ver meus agendamentos
             <ArrowRight className="h-4 w-4" aria-hidden />

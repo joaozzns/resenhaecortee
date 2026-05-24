@@ -37,16 +37,16 @@ export default async function AgendarPage() {
   return (
     <>
       <Header />
-      <main className="flex-1 pt-32 md:pt-40 pb-12">
+      <main className="flex-1 pt-24 md:pt-40 pb-12">
         <div className="container-x">
-          <header className="max-w-3xl mb-12 md:mb-16">
+          <header className="max-w-3xl mb-10 md:mb-16">
             <span className="eyebrow flex items-center gap-3">
               <span className="gold-rule" /> Agendamento
             </span>
-            <h1 className="mt-5 text-4xl md:text-5xl xl:text-6xl">
+            <h1 className="mt-4 md:mt-5 text-3xl sm:text-4xl md:text-5xl xl:text-6xl">
               Marque seu horário em quatro passos.
             </h1>
-            <p className="mt-5 text-foreground/70 leading-relaxed">
+            <p className="mt-4 md:mt-5 text-foreground/70 leading-relaxed text-sm sm:text-base">
               Sem fila, sem cadastro forçado, sem ligação. Em menos de um
               minuto está confirmado.
             </p>

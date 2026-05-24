@@ -58,7 +58,7 @@ export function ServicePickerStep({
                 onClick={() => onToggle(s.id)}
                 aria-pressed={checked}
                 className={cn(
-                  "group w-full text-left flex gap-5 p-5 md:p-6 rounded-[var(--radius-lg)]",
+                  "group w-full text-left flex gap-4 sm:gap-5 p-4 sm:p-5 md:p-6 rounded-[var(--radius-lg)]",
                   "border bg-surface transition-all duration-200 ease-[var(--ease-refined)]",
                   checked
                     ? "border-accent bg-accent-soft/40"
@@ -68,7 +68,7 @@ export function ServicePickerStep({
                 <div className="shrink-0 mt-0.5">
                   <span
                     className={cn(
-                      "grid place-items-center h-11 w-11 rounded-full border transition-colors",
+                      "grid place-items-center h-10 w-10 sm:h-11 sm:w-11 rounded-full border transition-colors",
                       checked
                         ? "bg-accent text-background border-accent"
                         : "border-border-strong text-accent group-hover:border-accent"
@@ -82,24 +82,27 @@ export function ServicePickerStep({
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-muted">
-                    <span>{CATEGORY_LABEL[s.category]}</span>
-                    <span className="h-px w-5 bg-border" />
-                    <span className="inline-flex items-center gap-1.5">
+                  <div className="flex items-center gap-2 sm:gap-3 text-[10px] uppercase tracking-[0.2em] text-muted">
+                    <span className="truncate">{CATEGORY_LABEL[s.category]}</span>
+                    <span className="h-px w-4 sm:w-5 bg-border shrink-0" />
+                    <span className="inline-flex items-center gap-1.5 shrink-0">
                       <Clock className="h-3 w-3" aria-hidden />
                       {formatDuration(s.duration_minutes)}
                     </span>
                   </div>
-                  <h3 className="mt-2 text-lg md:text-xl font-display font-semibold">
+                  <h3 className="mt-2 text-base sm:text-lg md:text-xl font-display font-semibold">
                     {s.name}
                   </h3>
                   {s.description && (
-                    <p className="mt-2 text-sm text-muted leading-relaxed line-clamp-2">
+                    <p className="mt-1.5 sm:mt-2 text-sm text-muted leading-relaxed line-clamp-2">
                       {s.description}
                     </p>
                   )}
+                  <p className="mt-3 font-display text-lg text-foreground sm:hidden">
+                    {formatBRL(s.price_cents)}
+                  </p>
                 </div>
-                <div className="shrink-0 self-start">
+                <div className="shrink-0 self-start hidden sm:block">
                   <span className="font-display text-xl text-foreground">
                     {formatBRL(s.price_cents)}
                   </span>

@@ -15,7 +15,7 @@ const SIDE_IMAGE =
  */
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-svh grid lg:grid-cols-2">
+    <div className="min-h-svh grid grid-cols-1 lg:grid-cols-2">
       {/* Coluna do formulário */}
       <div className="flex flex-col bg-background">
         <header className="container-x pt-6 pb-2 flex items-center justify-between">

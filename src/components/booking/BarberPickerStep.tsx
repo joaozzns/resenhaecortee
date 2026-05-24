@@ -84,14 +84,14 @@ function BarberOption({
       onClick={() => onSelect(id)}
       aria-pressed={checked}
       className={cn(
-        "group w-full text-left p-5 md:p-6 rounded-[var(--radius-lg)] border bg-surface",
-        "transition-all duration-200 ease-[var(--ease-refined)] flex items-center gap-5",
+        "group w-full text-left p-4 sm:p-5 md:p-6 rounded-[var(--radius-lg)] border bg-surface",
+        "transition-all duration-200 ease-[var(--ease-refined)] flex items-center gap-4 sm:gap-5",
         checked
           ? "border-accent bg-accent-soft/40"
           : "border-border hover:border-accent/50 hover:bg-surface-2"
       )}
     >
-      <div className="relative shrink-0 h-16 w-16 rounded-full overflow-hidden border border-border bg-surface-2">
+      <div className="relative shrink-0 h-14 w-14 sm:h-16 sm:w-16 rounded-full overflow-hidden border border-border bg-surface-2">
         {photoUrl ? (
           <Image
             src={photoUrl}
@@ -121,7 +121,7 @@ function BarberOption({
         </span>
       )}
       {iconFallback && !checked && (
-        <span className="text-[10px] uppercase tracking-[0.2em] text-accent">
+        <span className="hidden sm:inline text-[10px] uppercase tracking-[0.2em] text-accent shrink-0">
           Recomendado
         </span>
       )}

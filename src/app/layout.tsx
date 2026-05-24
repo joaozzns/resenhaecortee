@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, DM_Serif_Display } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -66,6 +66,12 @@ export const metadata: Metadata = {
   icons: {
     icon: "/favicon.ico",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0E0E0E",
 };
 
 export default function RootLayout({
