@@ -38,5 +38,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.redirect(new URL(safeRedirect, request.url));
+  // Delega a decisão final ao /auth/after-login (que conhece o role do user)
+  return NextResponse.redirect(
+    new URL(
+      `/auth/after-login?fallback=${encodeURIComponent(safeRedirect)}`,
+      request.url
+    )
+  );
 }

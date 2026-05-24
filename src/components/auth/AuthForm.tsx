@@ -63,7 +63,8 @@ function LoginForm() {
       return;
     }
     toast.success("Bem-vindo de volta.");
-    router.replace(redirect);
+    // /auth/after-login decide o destino conforme o role (admin → /admin)
+    router.replace(`/auth/after-login?fallback=${encodeURIComponent(redirect)}`);
     router.refresh();
   }
 
@@ -266,7 +267,7 @@ function SignupForm() {
       return;
     }
     toast.success("Conta criada e você já está logado.");
-    router.replace(redirect);
+    router.replace(`/auth/after-login?fallback=${encodeURIComponent(redirect)}`);
     router.refresh();
   }
 
