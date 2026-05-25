@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { fromZonedTime } from "date-fns-tz";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -12,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardBody, CardHeader, CardTitle } from "@/components/ui/card";
 import { saveBlock, deleteBlock } from "@/app/admin/actions";
 import type { Tables } from "@/lib/supabase/types";
+import { fmtBRT } from "@/lib/date";
 
 type Block = Tables<"time_blocks">;
 type Barber = Tables<"barbers">;
@@ -63,10 +62,10 @@ export function BlocksAdmin({
               <tr key={b.id} className="border-b border-border last:border-0">
                 <td className="p-3">{b.barber?.name ?? "—"}</td>
                 <td className="p-3 tabular-nums">
-                  {format(new Date(b.starts_at), "dd/MM HH:mm", { locale: ptBR })}
+                  {fmtBRT(b.starts_at, "dd/MM HH:mm")}
                 </td>
                 <td className="p-3 tabular-nums">
-                  {format(new Date(b.ends_at), "dd/MM HH:mm", { locale: ptBR })}
+                  {fmtBRT(b.ends_at, "dd/MM HH:mm")}
                 </td>
                 <td className="p-3 text-muted">{b.reason ?? "—"}</td>
                 <td className="p-3 text-right">

@@ -1,8 +1,10 @@
 import { addDays, format, startOfWeek, eachDayOfInterval } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
 import { ptBR } from "date-fns/locale";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { formatBRL } from "@/lib/utils";
+import { fmtBRT, BRT_TZ } from "@/lib/date";
 
 export const metadata = { title: "Agenda" };
 
@@ -115,7 +117,12 @@ export default async function AdminCalendarPage({
               <tr key={h} className="border-b border-border last:border-0">
                 <td className="p-3 text-muted tabular-nums align-top">{h}</td>
                 {days.map((d) => {
-                  const cellStart = new Date(`${format(d, "yyyy-MM-dd")}T${h}:00`);
+                  // Constrói o instante UTC equivalente a (data+hora) em BRT —
+                  // assim a célula bate com a.starts_at independente do TZ do runtime.
+                  const cellStart = fromZonedTime(
+                    `${format(d, "yyyy-MM-dd")}T${h}:00`,
+                    BRT_TZ
+                  );
                   const cellEnd = new Date(cellStart.getTime() + 60 * 60 * 1000);
                   const items = (appts ?? []).filter((a) => {
                     const s = new Date(a.starts_at);
@@ -182,7 +189,6 @@ export default async function AdminCalendarPage({
                   .map((s) => s.service)
                   .filter(Boolean) as { name: string; price_cents: number }[];
                 /* eslint-enable @typescript-eslint/no-explicit-any */
-                const startsAt = new Date(a.starts_at);
                 return (
                   <li
                     key={a.id}
@@ -197,9 +203,7 @@ export default async function AdminCalendarPage({
                         </span>
                       </p>
                       <p className="text-xs text-muted tabular-nums">
-                        {format(startsAt, "EEEE, dd/MM 'às' HH:mm", {
-                          locale: ptBR,
-                        })}
+                        {fmtBRT(a.starts_at, "EEEE, dd/MM 'às' HH:mm")} (BRT)
                       </p>
                       {items.length > 0 && (
                         <ul className="flex flex-wrap gap-1.5 pt-1">

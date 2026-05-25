@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { ArrowLeft } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Card, CardBody } from "@/components/ui/card";
 import { formatBRL } from "@/lib/utils";
+import { fmtBRT } from "@/lib/date";
 
 export const metadata = { title: "Cliente" };
 
@@ -126,9 +126,7 @@ export default async function ClienteDetailPage({
               {(appts ?? []).map((a) => (
                 <tr key={a.id} className="border-b border-border last:border-0">
                   <td className="p-3">
-                    {format(new Date(a.starts_at), "dd/MM HH:mm", {
-                      locale: ptBR,
-                    })}
+                    {fmtBRT(a.starts_at, "dd/MM HH:mm")}
                   </td>
                   <td className="p-3">
                     {(

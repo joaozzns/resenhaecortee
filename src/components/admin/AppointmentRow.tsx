@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { format } from "date-fns";
 import {
   Check,
   CheckCircle2,
@@ -13,6 +12,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { setAppointmentStatus } from "@/app/admin/actions";
 import { formatBRL, cn } from "@/lib/utils";
+import { fmtBRT } from "@/lib/date";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -75,7 +75,7 @@ export function AppointmentRow({ a }: { a: AdminAppointmentRow }) {
     <li className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-5 py-4 text-sm">
       <div className="flex items-center gap-4 min-w-0">
         <span className="font-display text-xl text-accent tabular-nums w-16 shrink-0">
-          {format(new Date(a.starts_at), "HH:mm")}
+          {fmtBRT(a.starts_at, "HH:mm")}
         </span>
         <div className="min-w-0">
           <p className="font-medium text-foreground truncate">

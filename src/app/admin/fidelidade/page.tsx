@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
 import { createAdminClient } from "@/lib/supabase/server";
+import { fmtBRT } from "@/lib/date";
 import { Card } from "@/components/ui/card";
 
 export const metadata = { title: "Fidelidade (admin)" };
@@ -43,7 +43,7 @@ export default async function AdminLoyaltyPage() {
             {(tx ?? []).map((t) => (
               <tr key={t.id} className="border-b border-border last:border-0">
                 <td className="p-3 tabular-nums">
-                  {format(new Date(t.created_at), "dd/MM/yyyy")}
+                  {fmtBRT(t.created_at, "dd/MM/yyyy")}
                 </td>
                 <td className="p-3">
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

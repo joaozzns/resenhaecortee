@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { format, subDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Search } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { fmtBRT } from "@/lib/date";
 
 export const metadata = { title: "Clientes" };
 
@@ -198,9 +198,7 @@ export default async function ClientesPage({
                     : "—"}
                 </td>
                 <td className="p-4 text-muted">
-                  {format(new Date(p.created_at), "dd 'de' MMM yyyy", {
-                    locale: ptBR,
-                  })}
+                  {fmtBRT(p.created_at, "dd 'de' MMM yyyy")}
                 </td>
                 <td className="p-4 text-right tabular-nums">
                   {p.loyalty_points}

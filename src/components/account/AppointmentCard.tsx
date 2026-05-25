@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { format, formatDistanceToNow, isPast } from "date-fns";
+import { formatDistanceToNow, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Calendar,
@@ -19,6 +19,7 @@ import type { AppointmentWithDetails } from "@/lib/account/queries";
 import { siteConfig } from "@/lib/site";
 import { cancelMyAppointment, rateMyAppointment } from "@/app/minha-conta/actions";
 import { formatBRL } from "@/lib/utils";
+import { fmtBRT } from "@/lib/date";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -56,10 +57,9 @@ export function AppointmentCard({
   const shortId = appointment.id.slice(0, 8).toUpperCase();
 
   // WhatsApp pré-preenchido
-  const waMessage = `Olá! Sobre meu agendamento #${shortId} (${format(
+  const waMessage = `Olá! Sobre meu agendamento #${shortId} (${fmtBRT(
     startsAt,
-    "dd/MM 'às' HH:mm",
-    { locale: ptBR }
+    "dd/MM 'às' HH:mm"
   )})…`;
   const waUrl = `https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(waMessage)}`;
 
@@ -129,7 +129,7 @@ export function AppointmentCard({
               Data
             </dt>
             <dd className="mt-0.5">
-              {format(startsAt, "dd 'de' MMM, EEEE", { locale: ptBR })}
+              {fmtBRT(startsAt, "dd 'de' MMM, EEEE")}
             </dd>
           </div>
         </div>
@@ -139,7 +139,7 @@ export function AppointmentCard({
             <dt className="text-[10px] uppercase tracking-[0.18em] text-muted">
               Horário
             </dt>
-            <dd className="mt-0.5 tabular-nums">{format(startsAt, "HH:mm")}</dd>
+            <dd className="mt-0.5 tabular-nums">{fmtBRT(startsAt, "HH:mm")} BRT</dd>
           </div>
         </div>
         <div>

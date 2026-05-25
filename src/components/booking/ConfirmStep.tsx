@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { Loader2, CheckCircle2, UserCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +16,7 @@ import { PasswordStrength } from "@/components/auth/PasswordStrength";
 import type { Service, Barber, BookingState } from "@/lib/booking/types";
 import type { CurrentUser } from "@/lib/auth/helpers";
 import { formatBRL, formatDuration } from "@/lib/utils";
+import { fmtBRT } from "@/lib/date";
 
 const guestSchema = z
   .object({
@@ -203,11 +202,9 @@ export function ConfirmStep({
                 <div className="flex justify-between">
                   <dt className="text-muted">Quando</dt>
                   <dd className="text-right">
-                    {format(startsAtDate, "dd 'de' MMM, EEEE", {
-                      locale: ptBR,
-                    })}
+                    {fmtBRT(startsAtDate, "dd 'de' MMM, EEEE")}
                     <span className="block text-accent">
-                      {format(startsAtDate, "HH:mm")}
+                      {fmtBRT(startsAtDate, "HH:mm")} BRT
                     </span>
                   </dd>
                 </div>

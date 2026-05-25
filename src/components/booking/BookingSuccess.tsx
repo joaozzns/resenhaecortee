@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import {
   ArrowRight,
   CalendarPlus,
@@ -13,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import type { Service, Barber, BookingState } from "@/lib/booking/types";
 import { siteConfig } from "@/lib/site";
 import { formatBRL } from "@/lib/utils";
+import { fmtBRT } from "@/lib/date";
 
 /**
  * Tela final pós-agendamento. Exibe o número curto do pedido (8 chars do
@@ -64,7 +63,7 @@ export function BookingSuccess({
   })();
 
   const waMessage = startsAt
-    ? `Olá! Confirmei meu agendamento #${shortId} na Resenha e Corte para ${format(startsAt, "dd/MM 'às' HH:mm", { locale: ptBR })}. ${titleSummary}.`
+    ? `Olá! Confirmei meu agendamento #${shortId} na Resenha e Corte para ${fmtBRT(startsAt, "dd/MM 'às' HH:mm")}. ${titleSummary}.`
     : `Olá! Confirmei meu agendamento #${shortId} na Resenha e Corte.`;
   const waUrl = `https://wa.me/${siteConfig.whatsapp}?text=${encodeURIComponent(waMessage)}`;
   const cancelUrl = `${siteConfig.url}/agendar/cancelar?token=${cancelToken}`;
@@ -103,10 +102,10 @@ export function BookingSuccess({
                 Quando
               </p>
               <p className="font-display text-xl">
-                {format(startsAt, "dd 'de' MMMM", { locale: ptBR })}
+                {fmtBRT(startsAt, "dd 'de' MMMM")}
                 <span className="text-accent">
                   {" "}
-                  · {format(startsAt, "HH:mm")}
+                  · {fmtBRT(startsAt, "HH:mm")} BRT
                 </span>
               </p>
             </div>
