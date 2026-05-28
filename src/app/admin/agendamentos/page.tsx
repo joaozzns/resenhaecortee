@@ -22,6 +22,43 @@ const HOURS = [
   "19:00",
 ];
 
+const STATUS_STYLE = {
+  pending: {
+    border: "border-amber-400/80",
+    dot: "bg-amber-400",
+    timeText: "text-amber-400",
+  },
+  confirmed: {
+    border: "border-success/80",
+    dot: "bg-success",
+    timeText: "text-success",
+  },
+  completed: {
+    border: "border-accent/80",
+    dot: "bg-accent",
+    timeText: "text-accent",
+  },
+  no_show: {
+    border: "border-muted/60",
+    dot: "bg-muted",
+    timeText: "text-muted",
+  },
+  cancelled: {
+    border: "border-danger/80",
+    dot: "bg-danger",
+    timeText: "text-danger",
+  },
+} as const;
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={`inline-block h-2 w-2 rounded-full ${color}`} aria-hidden />
+      {label}
+    </span>
+  );
+}
+
 export default async function AdminCalendarPage({
   searchParams,
 }: {
@@ -86,10 +123,10 @@ export default async function AdminCalendarPage({
       </header>
 
       <Card className="overflow-x-auto">
-        <table className="min-w-full text-xs">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left p-3 text-muted font-normal w-16">
+        <table className="min-w-[900px] w-full text-xs border-separate border-spacing-0">
+          <thead className="bg-surface-2/40">
+            <tr>
+              <th className="sticky left-0 bg-surface-2/80 backdrop-blur z-10 text-left p-3 text-muted font-normal w-16 border-b border-border">
                 Hora
               </th>
               {days.map((d) => {
@@ -98,7 +135,7 @@ export default async function AdminCalendarPage({
                   <th
                     key={d.toISOString()}
                     className={
-                      "text-left p-3 font-normal " +
+                      "text-left p-3 font-normal border-b border-border " +
                       (isToday ? "text-accent" : "text-muted")
                     }
                   >
@@ -113,9 +150,16 @@ export default async function AdminCalendarPage({
             </tr>
           </thead>
           <tbody>
-            {HOURS.map((h) => (
-              <tr key={h} className="border-b border-border last:border-0">
-                <td className="p-3 text-muted tabular-nums align-top">{h}</td>
+            {HOURS.map((h, hIdx) => (
+              <tr key={h}>
+                <td
+                  className={
+                    "sticky left-0 bg-background z-10 px-3 py-3 text-muted tabular-nums align-top font-display text-sm" +
+                    (hIdx < HOURS.length - 1 ? " border-b border-border" : "")
+                  }
+                >
+                  {h}
+                </td>
                 {days.map((d) => {
                   // Constrói o instante UTC equivalente a (data+hora) em BRT —
                   // assim a célula bate com a.starts_at independente do TZ do runtime.
@@ -124,28 +168,62 @@ export default async function AdminCalendarPage({
                     BRT_TZ
                   );
                   const cellEnd = new Date(cellStart.getTime() + 60 * 60 * 1000);
-                  const items = (appts ?? []).filter((a) => {
-                    const s = new Date(a.starts_at);
-                    return s >= cellStart && s < cellEnd;
-                  });
+                  const items = (appts ?? [])
+                    .filter((a) => {
+                      const s = new Date(a.starts_at);
+                      return s >= cellStart && s < cellEnd;
+                    })
+                    .sort(
+                      (a, b) =>
+                        new Date(a.starts_at).getTime() -
+                        new Date(b.starts_at).getTime()
+                    );
                   return (
-                    <td key={d.toISOString() + h} className="p-1 align-top">
-                      <div className="space-y-1">
-                        {items.map((it) => (
-                          <div
-                            key={it.id}
-                            className="rounded bg-accent-soft border border-accent/40 p-2 text-foreground"
-                          >
-                            <p className="font-medium truncate">
-                              {it.client_name}
-                            </p>
-                            <p className="text-[10px] text-muted truncate">
-                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                              {(it.barber as any)?.name ?? "—"} ·{" "}
-                              {formatBRL(it.total_cents)}
-                            </p>
-                          </div>
-                        ))}
+                    <td
+                      key={d.toISOString() + h}
+                      className={
+                        "p-1.5 align-top min-w-[140px]" +
+                        (hIdx < HOURS.length - 1 ? " border-b border-border" : "")
+                      }
+                    >
+                      <div className="space-y-1.5">
+                        {items.map((it) => {
+                          const cfg = STATUS_STYLE[it.status as keyof typeof STATUS_STYLE] ?? STATUS_STYLE.confirmed;
+                          return (
+                            <div
+                              key={it.id}
+                              title={`${fmtBRT(it.starts_at, "HH:mm")} · ${it.client_name} · ${formatBRL(it.total_cents)}`}
+                              className={
+                                "group rounded-md border-l-2 p-2 bg-surface text-foreground transition-colors hover:bg-surface-2 " +
+                                cfg.border
+                              }
+                            >
+                              <div className="flex items-baseline justify-between gap-1.5 mb-0.5">
+                                <span
+                                  className={
+                                    "font-display text-sm tabular-nums leading-none " +
+                                    cfg.timeText
+                                  }
+                                >
+                                  {fmtBRT(it.starts_at, "HH:mm")}
+                                </span>
+                                <span
+                                  aria-hidden
+                                  className={
+                                    "inline-block h-1.5 w-1.5 rounded-full " +
+                                    cfg.dot
+                                  }
+                                />
+                              </div>
+                              <p className="font-medium text-[11px] leading-tight truncate">
+                                {it.client_name}
+                              </p>
+                              <p className="text-[10px] text-muted tabular-nums leading-tight mt-0.5">
+                                {formatBRL(it.total_cents)}
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
                     </td>
                   );
@@ -155,6 +233,14 @@ export default async function AdminCalendarPage({
           </tbody>
         </table>
       </Card>
+
+      {/* Legenda de cores */}
+      <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted">
+        <LegendDot color="bg-amber-400" label="Aguardando" />
+        <LegendDot color="bg-success" label="Confirmado" />
+        <LegendDot color="bg-accent" label="Concluído" />
+        <LegendDot color="bg-muted" label="Faltou" />
+      </div>
 
       <p className="text-xs text-muted">
         Cada bloco corresponde a 1 hora. Cliques e edição inline virão em
