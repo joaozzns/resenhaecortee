@@ -1,10 +1,13 @@
 import { addDays, format, startOfWeek, eachDayOfInterval } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { ptBR } from "date-fns/locale";
+import { MessageCircle } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/utils";
 import { fmtBRT, BRT_TZ } from "@/lib/date";
+import { buildAppointmentConfirmLink } from "@/lib/whatsapp";
 
 export const metadata = { title: "Agenda" };
 
@@ -78,7 +81,7 @@ export default async function AdminCalendarPage({
   const { data: appts } = await admin
     .from("appointments")
     .select(
-      "id, starts_at, ends_at, status, client_name, total_cents, barber:barbers(name), services:appointment_services(service:services(name, price_cents))"
+      "id, starts_at, ends_at, status, client_name, client_phone, total_cents, barber:barbers(name), services:appointment_services(service:services(name, price_cents))"
     )
     .gte("starts_at", startMonday.toISOString())
     .lt("starts_at", addDays(startMonday, 7).toISOString())
@@ -275,6 +278,16 @@ export default async function AdminCalendarPage({
                   .map((s) => s.service)
                   .filter(Boolean) as { name: string; price_cents: number }[];
                 /* eslint-enable @typescript-eslint/no-explicit-any */
+                const isFuture = new Date(a.starts_at) > new Date();
+                const wa =
+                  a.status === "confirmed" && isFuture
+                    ? buildAppointmentConfirmLink({
+                        client_name: a.client_name,
+                        client_phone: a.client_phone,
+                        starts_at: a.starts_at,
+                        barber_name: barberName === "—" ? null : barberName,
+                      })
+                    : null;
                 return (
                   <li
                     key={a.id}
@@ -307,13 +320,28 @@ export default async function AdminCalendarPage({
                         </ul>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
-                        Total
-                      </p>
-                      <p className="font-display text-xl text-foreground tabular-nums">
-                        {formatBRL(a.total_cents)}
-                      </p>
+                    <div className="flex md:flex-col items-end md:items-end justify-between gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted">
+                          Total
+                        </p>
+                        <p className="font-display text-xl text-foreground tabular-nums">
+                          {formatBRL(a.total_cents)}
+                        </p>
+                      </div>
+                      {wa && (
+                        <Button asChild variant="outline" size="sm">
+                          <a
+                            href={wa}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            aria-label={`Avisar ${a.client_name} no WhatsApp`}
+                          >
+                            <MessageCircle className="h-3 w-3" aria-hidden />
+                            WhatsApp
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </li>
                 );

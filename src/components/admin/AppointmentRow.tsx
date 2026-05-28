@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { setAppointmentStatus } from "@/app/admin/actions";
 import { formatBRL, cn } from "@/lib/utils";
 import { fmtBRT } from "@/lib/date";
-import { siteConfig } from "@/lib/site";
+import { buildAppointmentConfirmLink } from "@/lib/whatsapp";
 
 type Status = "pending" | "confirmed" | "completed" | "cancelled" | "no_show";
 
@@ -44,25 +44,6 @@ export type AdminAppointmentRow = {
   barber_name: string | null;
 };
 
-/**
- * Constrói o link wa.me com a mensagem de confirmação. Normaliza o telefone
- * pra dígitos + DDI 55. Retorna null se o número for inválido.
- */
-function buildWhatsAppLink(a: AdminAppointmentRow): string | null {
-  if (!a.client_phone) return null;
-  const digits = a.client_phone.replace(/\D/g, "");
-  if (digits.length < 10) return null;
-  const withDdi = digits.startsWith("55") ? digits : `55${digits}`;
-  const first = a.client_name.split(" ")[0] || "";
-  const data = fmtBRT(a.starts_at, "EEEE, dd/MM");
-  const hora = fmtBRT(a.starts_at, "HH:mm");
-  const barber = a.barber_name ? ` com ${a.barber_name}` : "";
-  const msg =
-    `Olá${first ? `, ${first}` : ""}! Aqui é da ${siteConfig.name}.\n` +
-    `Confirmamos seu horário para ${data} às ${hora}${barber}.\n` +
-    `Te esperamos! Qualquer coisa é só responder por aqui.`;
-  return `https://wa.me/${withDdi}?text=${encodeURIComponent(msg)}`;
-}
 
 /**
  * Linha de agendamento usada no dashboard /admin.
@@ -182,7 +163,7 @@ export function AppointmentRow({ a }: { a: AdminAppointmentRow }) {
         {a.status === "confirmed" && !past && (
           <>
             {(() => {
-              const wa = buildWhatsAppLink(a);
+              const wa = buildAppointmentConfirmLink(a);
               return wa ? (
                 <Button asChild variant="outline" size="sm">
                   <a
