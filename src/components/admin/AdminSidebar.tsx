@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CalendarPlus,
   CalendarRange,
   CreditCard,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 const ITEMS = [
   { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
   { href: "/admin/agendamentos", label: "Agenda", Icon: CalendarRange },
+  { href: "/admin/novo-agendamento", label: "Novo agend.", Icon: CalendarPlus },
   { href: "/admin/clientes", label: "Clientes", Icon: UsersRound },
   { href: "/admin/planos", label: "Mensalistas", Icon: CreditCard },
   { href: "/admin/servicos", label: "Serviços", Icon: ListChecks },
