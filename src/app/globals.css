@@ -100,8 +100,10 @@ h3, h4, h5, h6 {
 
 /* iOS / macOS native font stack — usado no /admin para vibe Apple Pro.
    Em devices Apple, renderiza San Francisco (SF Pro Display/Text);
-   em outros, cai pro system-ui ou Helvetica Neue. */
+   em outros, cai pro system-ui ou Helvetica Neue.
+   Aplica recursivamente — sobrescreve até classes Tailwind `font-display`. */
 .font-ios,
+.font-ios *,
 .font-ios h1,
 .font-ios h2,
 .font-ios h3,
@@ -113,6 +115,9 @@ h3, h4, h5, h6 {
 .font-ios input,
 .font-ios textarea,
 .font-ios select {
+  /* !important pra ganhar das utilities Tailwind (font-display, font-sans)
+     usadas em elementos descendentes — meta é unificar toda a área /admin
+     no stack iOS. */
   font-family:
     -apple-system,
     BlinkMacSystemFont,
@@ -120,7 +125,7 @@ h3, h4, h5, h6 {
     "SF Pro Text",
     "Helvetica Neue",
     system-ui,
-    sans-serif;
+    sans-serif !important;
   letter-spacing: -0.011em;
 }
 .font-ios h1,
