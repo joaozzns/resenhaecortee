@@ -24,6 +24,7 @@ type ApptRaw = {
   starts_at: string;
   status: AdminAppointmentRow["status"];
   client_name: string;
+  client_phone: string | null;
   total_cents: number;
   barber: { name: string } | null;
 };
@@ -34,6 +35,7 @@ function normalize(rows: ApptRaw[] | null): AdminAppointmentRow[] {
     starts_at: a.starts_at,
     status: a.status,
     client_name: a.client_name,
+    client_phone: a.client_phone,
     total_cents: a.total_cents,
     barber_name: a.barber?.name ?? null,
   }));
@@ -55,7 +57,7 @@ export default async function AdminDashboard() {
     admin
       .from("appointments")
       .select(
-        "id, starts_at, status, client_name, total_cents, barber:barbers(name)"
+        "id, starts_at, status, client_name, client_phone, total_cents, barber:barbers(name)"
       )
       .gte("starts_at", dayStart)
       .lte("starts_at", dayEnd)
@@ -76,7 +78,7 @@ export default async function AdminDashboard() {
     admin
       .from("appointments")
       .select(
-        "id, starts_at, status, client_name, total_cents, barber:barbers(name)"
+        "id, starts_at, status, client_name, client_phone, total_cents, barber:barbers(name)"
       )
       .eq("status", "pending")
       .gte("starts_at", new Date().toISOString())
