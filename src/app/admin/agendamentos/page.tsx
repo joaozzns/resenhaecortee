@@ -11,7 +11,8 @@ import { buildAppointmentConfirmLink } from "@/lib/whatsapp";
 
 export const metadata = { title: "Agenda" };
 
-const HOURS = [
+const HOURS_FALLBACK = [
+  "08:00",
   "09:00",
   "10:00",
   "11:00",
@@ -62,6 +63,35 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   );
 }
 
+/**
+ * Lê as faixas de working_hours e devolve um array "HH:00" cobrindo o
+ * primeiro horário aberto até o último horário fechado da semana.
+ * Caiu no fallback se a tabela estiver vazia.
+ */
+function buildHourRange(
+  rows: { start_time: string; end_time: string }[] | null,
+  fallback: string[]
+): string[] {
+  if (!rows || rows.length === 0) return fallback;
+  let minH = 24;
+  let maxH = 0;
+  for (const r of rows) {
+    const sh = parseInt(r.start_time.slice(0, 2), 10);
+    const em = r.end_time.slice(3, 5);
+    let eh = parseInt(r.end_time.slice(0, 2), 10);
+    // Se o fim não cair no minuto 00, arredonda pra cima
+    if (em !== "00") eh += 1;
+    if (sh < minH) minH = sh;
+    if (eh > maxH) maxH = eh;
+  }
+  if (minH >= maxH) return fallback;
+  const out: string[] = [];
+  for (let h = minH; h < maxH; h++) {
+    out.push(`${String(h).padStart(2, "0")}:00`);
+  }
+  return out;
+}
+
 export default async function AdminCalendarPage({
   searchParams,
 }: {
@@ -78,15 +108,23 @@ export default async function AdminCalendarPage({
   });
 
   const admin = createAdminClient();
-  const { data: appts } = await admin
-    .from("appointments")
-    .select(
-      "id, starts_at, ends_at, status, client_name, client_phone, total_cents, barber:barbers(name), services:appointment_services(service:services(name, price_cents))"
-    )
-    .gte("starts_at", startMonday.toISOString())
-    .lt("starts_at", addDays(startMonday, 7).toISOString())
-    .neq("status", "cancelled")
-    .order("starts_at");
+  const [{ data: appts }, { data: hours }] = await Promise.all([
+    admin
+      .from("appointments")
+      .select(
+        "id, starts_at, ends_at, status, client_name, client_phone, total_cents, barber:barbers(name), services:appointment_services(service:services(name, price_cents))"
+      )
+      .gte("starts_at", startMonday.toISOString())
+      .lt("starts_at", addDays(startMonday, 7).toISOString())
+      .neq("status", "cancelled")
+      .order("starts_at"),
+    admin.from("working_hours").select("start_time, end_time"),
+  ]);
+
+  // Calcula o range global da semana a partir do working_hours (envelope que
+  // cobre todos os dias). Se vazio, usa o fallback. Sempre múltiplo de 1h —
+  // arredonda pra baixo no start e pra cima no end.
+  const HOURS = buildHourRange(hours, HOURS_FALLBACK);
 
   const prev = format(addDays(startMonday, -7), "yyyy-MM-dd");
   const next = format(addDays(startMonday, 7), "yyyy-MM-dd");
