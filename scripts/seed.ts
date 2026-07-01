@@ -67,11 +67,11 @@ const BARBERS = [
     sort_order: 1,
   },
   {
-    name: "Lucas Marques",
-    bio: "Especialista em técnicas modernas de coloração e degradê. Trabalho preciso, acabamento impecável.",
+    name: "Arthur",
+    bio: "Atendimento atencioso e cortes versáteis — do clássico ao contemporâneo.",
     specialties: [],
     instagram: null,
-    photo_url: "/barbers/lucasmarques.png",
+    photo_url: "/barbers/arthur.png",
     sort_order: 2,
   },
 ];

@@ -47,8 +47,8 @@ export default async function AgendarPage() {
               Marque seu horário em quatro passos.
             </h1>
             <p className="mt-4 md:mt-5 text-foreground/70 leading-relaxed text-sm sm:text-base">
-              Sem fila, sem cadastro forçado, sem ligação. Em menos de um
-              minuto está confirmado.
+              Sem fila, sem ligação. Basta ter uma conta e, em menos de um
+              minuto, seu horário está confirmado.
             </p>
           </header>
 

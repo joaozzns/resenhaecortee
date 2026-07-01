@@ -17,9 +17,6 @@ const bodySchema = z.object({
     phone: z.string().min(8),
   }),
   notes: z.string().max(500).optional(),
-  // Apenas para guests:
-  createAccount: z.boolean().optional(),
-  password: z.string().min(8).max(72).optional(),
   acceptTerms: z.boolean().refine((v) => v === true, "Aceite os termos"),
 });
 
@@ -33,6 +30,20 @@ export async function POST(req: NextRequest) {
     );
   }
   const input = parsed.data;
+
+  // 0. Autenticação obrigatória — não é possível agendar sem conta.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json(
+      { error: "É necessário ter uma conta para agendar um horário." },
+      { status: 401 }
+    );
+  }
+  const clientId = user.id;
+
   const admin = createAdminClient();
 
   // 1. Carregar serviços (snapshot de preço/duração para gravar no pedido)
@@ -105,39 +116,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // 3. Identificar quem está agendando
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  let clientId: string | null = user?.id ?? null;
-
-  // 4. (Opcional) criar conta para guest com password
-  if (!clientId && input.createAccount) {
-    if (!input.password) {
-      return NextResponse.json(
-        { error: "Senha obrigatória para criar conta." },
-        { status: 400 }
-      );
-    }
-    const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email: input.client.email,
-      password: input.password,
-      email_confirm: false,
-      user_metadata: {
-        full_name: input.client.name,
-        phone: input.client.phone,
-      },
-    });
-    if (createErr || !created.user) {
-      // Não bloqueia o agendamento — segue como guest, mas avisa.
-      console.warn("[appointments] não criou conta:", createErr?.message);
-    } else {
-      clientId = created.user.id;
-    }
-  }
-
-  // 5. Inserir appointment + appointment_services
+  // 3. Inserir appointment + appointment_services
   // Tentamos por unique-ish: se a constraint do índice parcial não existe,
   // a re-checagem acima é a defesa principal. Em produção considerar
   // EXCLUDE USING gist com tstzrange para garantia atômica.

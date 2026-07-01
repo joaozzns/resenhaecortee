@@ -6,37 +6,16 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, CheckCircle2, UserCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, UserCircle2, AlertCircle, LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/auth/PhoneInput";
-import { PasswordStrength } from "@/components/auth/PasswordStrength";
 import type { Service, Barber, BookingState } from "@/lib/booking/types";
 import type { CurrentUser } from "@/lib/auth/helpers";
 import { formatBRL, formatDuration } from "@/lib/utils";
 import { fmtBRT } from "@/lib/date";
-
-const guestSchema = z
-  .object({
-    name: z.string().min(3, "Nome muito curto").max(120),
-    email: z.string().email("E-mail inválido"),
-    phone: z.string().min(14, "Telefone incompleto").max(16),
-    notes: z.string().max(500).optional(),
-    createAccount: z.boolean(),
-    password: z.string().optional(),
-    acceptTerms: z.boolean().refine((v) => v === true, "Aceite os termos"),
-  })
-  .superRefine((v, ctx) => {
-    if (v.createAccount && (!v.password || v.password.length < 8)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["password"],
-        message: "Senha mínima de 8 caracteres",
-      });
-    }
-  });
 
 const loggedSchema = z.object({
   name: z.string().min(3).max(120),
@@ -46,7 +25,6 @@ const loggedSchema = z.object({
   acceptTerms: z.boolean().refine((v) => v === true, "Aceite os termos"),
 });
 
-type GuestForm = z.infer<typeof guestSchema>;
 type LoggedForm = z.infer<typeof loggedSchema>;
 
 export function ConfirmStep({
@@ -79,19 +57,6 @@ export function ConfirmStep({
       : null;
   const startsAtDate = state.startsAtUtc ? new Date(state.startsAtUtc) : null;
 
-  const guestForm = useForm<GuestForm>({
-    resolver: zodResolver(guestSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      notes: "",
-      createAccount: true,
-      password: "",
-      acceptTerms: false,
-    },
-  });
-
   const loggedForm = useForm<LoggedForm>({
     resolver: zodResolver(loggedSchema),
     defaultValues: {
@@ -106,7 +71,7 @@ export function ConfirmStep({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  async function submit(values: GuestForm | LoggedForm) {
+  async function submit(values: LoggedForm) {
     if (!state.startsAtUtc) return;
     setSubmitting(true);
     setSubmitError(null);
@@ -121,12 +86,6 @@ export function ConfirmStep({
           phone: values.phone,
         },
         notes: values.notes || undefined,
-        ...(isLogged
-          ? {}
-          : {
-              createAccount: (values as GuestForm).createAccount,
-              password: (values as GuestForm).password,
-            }),
         acceptTerms: values.acceptTerms,
       };
       const res = await fetch("/api/appointments", {
@@ -231,23 +190,19 @@ export function ConfirmStep({
               user={user}
             />
           ) : (
-            <GuestFlow
-              form={guestForm}
-              onSubmit={submit}
-              submitting={submitting}
-              redirectFromConfirm={() => {
+            <AccountRequired
+              onGoTo={(path) => {
                 if (typeof window !== "undefined") {
-                  router.push(
-                    `/entrar?redirect=${encodeURIComponent(
-                      window.location.pathname + window.location.search
-                    )}`
+                  const redirect = encodeURIComponent(
+                    window.location.pathname + window.location.search
                   );
+                  router.push(`${path}?redirect=${redirect}`);
                 }
               }}
             />
           )}
 
-          {submitError && (
+          {isLogged && submitError && (
             <p className="mt-4 flex items-start gap-2 text-sm text-danger">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
               {submitError}
@@ -337,112 +292,52 @@ function LoggedFlow({
 }
 
 // ============================================================================
-// Sub: guest
+// Sub: visitante sem conta — agendamento bloqueado
 // ============================================================================
 
-function GuestFlow({
-  form,
-  onSubmit,
-  submitting,
-  redirectFromConfirm,
+function AccountRequired({
+  onGoTo,
 }: {
-  form: ReturnType<typeof useForm<GuestForm>>;
-  onSubmit: (v: GuestForm) => void;
-  submitting: boolean;
-  redirectFromConfirm: () => void;
+  onGoTo: (path: "/entrar" | "/cadastrar") => void;
 }) {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = form;
-  const createAccount = watch("createAccount");
-  const password = watch("password") ?? "";
-
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-      <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-4 flex items-center justify-between gap-3 text-sm">
-        <span className="text-foreground/80">Já tem conta?</span>
-        <button
+    <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6 md:p-8 space-y-6">
+      <div className="flex items-start gap-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft/40 text-accent">
+          <LockKeyhole className="h-5 w-5" aria-hidden />
+        </div>
+        <div className="space-y-1.5">
+          <h3 className="font-display text-xl md:text-2xl">
+            É preciso ter uma conta para agendar.
+          </h3>
+          <p className="text-sm md:text-base text-foreground/70 leading-relaxed">
+            Não é possível agendar horário sem uma conta. Crie a sua ou entre
+            para confirmar seu horário — seus dados do agendamento ficam salvos
+            e você volta exatamente para esta etapa.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Button
           type="button"
-          onClick={redirectFromConfirm}
-          className="text-accent hover:underline"
+          size="lg"
+          className="w-full sm:flex-1"
+          onClick={() => onGoTo("/cadastrar")}
         >
-          Entrar para agendar mais rápido
-        </button>
+          Criar conta
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          className="w-full sm:flex-1"
+          onClick={() => onGoTo("/entrar")}
+        >
+          Já tenho conta — Entrar
+        </Button>
       </div>
-
-      <div className="grid md:grid-cols-2 gap-4">
-        <Field id="name" label="Nome" error={errors.name?.message}>
-          <Input
-            id="name"
-            placeholder="Como devemos te chamar"
-            {...register("name")}
-          />
-        </Field>
-        <Field id="phone" label="Celular" error={errors.phone?.message}>
-          <PhoneInput id="phone" {...register("phone")} />
-        </Field>
-      </div>
-
-      <Field id="email" label="E-mail" error={errors.email?.message}>
-        <Input
-          id="email"
-          type="email"
-          placeholder="seu@email.com"
-          {...register("email")}
-        />
-      </Field>
-
-      <Field id="notes" label="Observações (opcional)" error={errors.notes?.message}>
-        <textarea
-          id="notes"
-          rows={3}
-          maxLength={500}
-          className="w-full rounded-[var(--radius)] bg-surface border border-border px-4 py-3 text-sm focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent focus-visible:outline-none"
-          {...register("notes")}
-        />
-      </Field>
-
-      <label className="flex items-start gap-3 text-sm cursor-pointer">
-        <input
-          type="checkbox"
-          {...register("createAccount")}
-          className="mt-1 h-4 w-4 accent-accent"
-        />
-        <span className="text-foreground/85">
-          Criar uma conta para acompanhar meus agendamentos.
-          <span className="block text-xs text-muted mt-0.5">
-            Recomendado — fica mais fácil reagendar e consultar histórico.
-          </span>
-        </span>
-      </label>
-
-      {createAccount && (
-        <Field id="password" label="Senha" error={errors.password?.message}>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Mínimo 8 caracteres"
-            {...register("password")}
-          />
-          <PasswordStrength value={password} />
-        </Field>
-      )}
-
-      <Terms register={register} error={errors.acceptTerms?.message} />
-
-      <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-        {submitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        ) : (
-          <CheckCircle2 className="h-4 w-4" aria-hidden />
-        )}
-        Confirmar agendamento
-      </Button>
-    </form>
+    </div>
   );
 }
 

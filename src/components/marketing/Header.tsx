@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/auth/UserMenu";
+import { createClient } from "@/lib/supabase/client";
 import { siteConfig, navLinks } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -21,12 +22,30 @@ export function Header() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  // null = ainda carregando; evita mostrar "Entrar" a quem já está logado.
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Estado de autenticação — mantém o drawer mobile em sincronia com o login.
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (mounted) setLoggedIn(!!user);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setLoggedIn(!!session?.user);
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   // Trava scroll do body quando o drawer está aberto
@@ -170,9 +189,16 @@ export function Header() {
                 <Button asChild size="lg">
                   <Link href="/agendar">Agendar horário</Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/entrar">Entrar / Cadastrar</Link>
-                </Button>
+                {loggedIn === false && (
+                  <Button asChild variant="outline" size="lg">
+                    <Link href="/entrar">Entrar / Cadastrar</Link>
+                  </Button>
+                )}
+                {loggedIn === true && (
+                  <Button asChild variant="outline" size="lg">
+                    <Link href="/minha-conta">Minha conta</Link>
+                  </Button>
+                )}
               </div>
             </nav>
 
