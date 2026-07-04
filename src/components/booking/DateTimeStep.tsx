@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { ptBR } from "date-fns/locale";
 import { format, addDays, startOfToday } from "date-fns";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import "react-day-picker/style.css";
 import type { Slot } from "@/lib/booking/availability";
 import { TimeSlotPicker } from "./TimeSlotPicker";
@@ -124,6 +124,7 @@ export function DateTimeStep({
               showOutsideDays={false}
               weekStartsOn={1}
               classNames={dayPickerClasses}
+              components={{ Chevron: NavChevron }}
             />
           </div>
         </div>
@@ -165,21 +166,40 @@ export function DateTimeStep({
 }
 
 /**
+ * Setinhas de navegação entre meses. Usamos ícones lucide (currentColor) para
+ * herdarem a cor do botão (foreground → accent no hover) e ficarem sempre
+ * visíveis — sem isso o cliente não consegue avançar para o mês seguinte.
+ */
+function NavChevron({
+  orientation,
+}: {
+  orientation?: "left" | "right" | "up" | "down";
+}) {
+  const Icon = orientation === "right" ? ChevronRight : ChevronLeft;
+  return <Icon className="h-4 w-4" aria-hidden />;
+}
+
+/**
  * react-day-picker v9 aceita classNames por slot. Sobrescrevemos com
  * tokens da marca. Os data-attributes (selected/disabled/today) entram via
  * variants básicas — mantenho minimalista, leitura > flair.
+ *
+ * Importante: sobrescrever um slot REMOVE a classe `rdp-*` padrão (e o CSS de
+ * posicionamento que vem com ela). Por isso a barra de navegação e as setas
+ * são posicionadas manualmente aqui — a `nav` fica sobreposta ao topo (mês
+ * centralizado, setas nas pontas) e continua clicável.
  */
 const dayPickerClasses: React.ComponentProps<typeof DayPicker>["classNames"] = {
   root: "[--rdp-cell-size:38px] text-foreground",
-  months: "flex flex-col gap-4",
-  month_caption: "flex items-center justify-center mb-2",
+  months: "relative flex flex-col gap-4",
+  month_caption: "flex items-center justify-center h-10 mb-2",
   caption_label:
     "font-display text-base capitalize text-foreground tracking-tight",
-  nav: "flex items-center justify-between",
+  nav: "absolute inset-x-0 top-0 z-10 flex h-10 items-center justify-between",
   button_previous:
-    "absolute top-2 left-2 grid place-items-center h-8 w-8 rounded-full border border-border text-foreground hover:border-accent hover:text-accent transition-colors",
+    "grid place-items-center h-8 w-8 rounded-full border border-border text-foreground hover:border-accent hover:text-accent transition-colors aria-disabled:opacity-30 aria-disabled:pointer-events-none",
   button_next:
-    "absolute top-2 right-2 grid place-items-center h-8 w-8 rounded-full border border-border text-foreground hover:border-accent hover:text-accent transition-colors",
+    "grid place-items-center h-8 w-8 rounded-full border border-border text-foreground hover:border-accent hover:text-accent transition-colors aria-disabled:opacity-30 aria-disabled:pointer-events-none",
   weekdays: "grid grid-cols-7 gap-1 text-center mb-1",
   weekday:
     "text-[10px] uppercase tracking-[0.18em] text-muted font-medium pb-2",
