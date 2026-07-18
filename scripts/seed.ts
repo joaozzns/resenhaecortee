@@ -67,11 +67,11 @@ const BARBERS = [
     sort_order: 1,
   },
   {
-    name: "Arthur",
+    name: "Marcos",
     bio: "Atendimento atencioso e cortes versáteis — do clássico ao contemporâneo.",
     specialties: [],
     instagram: null,
-    photo_url: "/barbers/arthur.png",
+    photo_url: null,
     sort_order: 2,
   },
 ];
