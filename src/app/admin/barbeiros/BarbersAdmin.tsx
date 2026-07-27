@@ -108,8 +108,8 @@ export function BarbersAdmin({ barbers }: { barbers: Barber[] }) {
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative flex-1 sm:flex-none">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted"
               aria-hidden
@@ -127,7 +127,11 @@ export function BarbersAdmin({ barbers }: { barbers: Barber[] }) {
             {barbers.length} no total
           </p>
         </div>
-        <Button size="sm" onClick={() => setEditing("new")}>
+        <Button
+          size="sm"
+          className="w-full sm:w-auto"
+          onClick={() => setEditing("new")}
+        >
           <Plus className="h-4 w-4" aria-hidden /> Novo barbeiro
         </Button>
       </div>
@@ -363,7 +367,7 @@ function BarberFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4"
+      className="fixed inset-0 z-50 grid place-items-center p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={initial ? "Editar barbeiro" : "Novo barbeiro"}
@@ -374,9 +378,9 @@ function BarberFormModal({
         aria-label="Fechar"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[var(--radius-lg)] border border-border bg-surface shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-surface/95 px-6 py-4 backdrop-blur">
-          <h2 className="font-display text-lg font-semibold">
+      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-[var(--radius-lg)] border border-border bg-surface shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3.5 sm:px-6 sm:py-4">
+          <h2 className="font-display text-base font-semibold sm:text-lg">
             {initial ? "Editar barbeiro" : "Novo barbeiro"}
           </h2>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
@@ -384,9 +388,13 @@ function BarberFormModal({
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit(onValid)} className="space-y-6 p-6">
-          {/* Foto */}
-          <PhotoUploader
+        <form
+          onSubmit={handleSubmit(onValid)}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4 sm:p-6">
+            {/* Foto */}
+            <PhotoUploader
             name={initial?.name ?? "Novo barbeiro"}
             value={photoUrl}
             onChange={setPhotoUrl}
@@ -458,11 +466,24 @@ function BarberFormModal({
             <Switch checked={active} onChange={setActive} label="Ativo" />
           </label>
 
-          <div className="flex justify-end gap-2 border-t border-border pt-5">
-            <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+          </div>
+
+          <div className="flex gap-2 border-t border-border p-4 sm:justify-end sm:px-6 sm:py-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="flex-1 sm:flex-none"
+            >
               Cancelar
             </Button>
-            <Button type="submit" size="sm" disabled={pending}>
+            <Button
+              type="submit"
+              size="sm"
+              disabled={pending}
+              className="flex-1 sm:flex-none"
+            >
               {pending && (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               )}
