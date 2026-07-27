@@ -41,10 +41,10 @@
   --color-success: var(--success);
   --color-danger: var(--danger);
 
-  --font-display: var(--font-playfair);
-  --font-sans: var(--font-inter);
-  /* Hero font (DM Serif Display) — usada só no h1 da home para impacto. */
-  --font-hero: var(--font-hero);
+  --font-display: var(--font-syne);
+  --font-sans: var(--font-syne);
+  /* Site inteiro unificado na mesma fonte (Syne). */
+  --font-hero: var(--font-syne);
 
   --radius-sm: var(--radius-sm);
   --radius: var(--radius);
@@ -98,10 +98,9 @@ h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
-/* iOS / macOS native font stack — usado no /admin para vibe Apple Pro.
-   Em devices Apple, renderiza San Francisco (SF Pro Display/Text);
-   em outros, cai pro system-ui ou Helvetica Neue.
-   Aplica recursivamente — sobrescreve até classes Tailwind `font-display`. */
+/* Classe aplicada em toda a área /admin (ver admin/layout.tsx).
+   Unifica a fonte no Syne, aplicando recursivamente — sobrescreve até
+   classes Tailwind `font-display`/`font-sans` nos elementos descendentes. */
 .font-ios,
 .font-ios *,
 .font-ios h1,
@@ -116,16 +115,9 @@ h3, h4, h5, h6 {
 .font-ios textarea,
 .font-ios select {
   /* !important pra ganhar das utilities Tailwind (font-display, font-sans)
-     usadas em elementos descendentes — meta é unificar toda a área /admin
-     no stack iOS. */
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    "SF Pro Text",
-    "Helvetica Neue",
-    system-ui,
-    sans-serif !important;
+     usadas em elementos descendentes — unifica toda a área /admin na
+     fonte Syne (antes usava o stack Apple). */
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif !important;
   letter-spacing: -0.011em;
 }
 .font-ios h1,
