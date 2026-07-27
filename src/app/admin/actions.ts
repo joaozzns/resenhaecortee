@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { addMinutes } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
@@ -70,7 +71,17 @@ const barberSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(2).max(80),
   bio: z.string().max(1000).optional().or(z.literal("")),
-  photo_url: z.string().url().optional().or(z.literal("")),
+  // Aceita caminho relativo (/barbers/x.png) OU URL absoluta (Supabase Storage,
+  // Unsplash, etc.). O `.url()` antigo rejeitava caminhos relativos — bug que
+  // impedia usar as fotos do próprio projeto pela UI.
+  photo_url: z
+    .string()
+    .max(500)
+    .refine((s) => s === "" || s.startsWith("/") || /^https?:\/\//.test(s), {
+      message: "Use um caminho iniciando com / ou uma URL http(s).",
+    })
+    .optional()
+    .or(z.literal("")),
   specialties: z.array(z.string()).default([]),
   instagram: z.string().url().optional().or(z.literal("")),
   active: z.boolean().default(true),
@@ -108,6 +119,57 @@ export async function deleteBarber(id: string) {
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/barbeiros");
   return { ok: true };
+}
+
+/** Reativa um barbeiro inativo (contraparte do "desativar"). */
+export async function setBarberActive(id: string, active: boolean) {
+  await requireRole("admin");
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("barbers")
+    .update({ active })
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/barbeiros");
+  return { ok: true };
+}
+
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const PHOTO_EXT: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/avif": "avif",
+};
+
+/**
+ * Upload da foto do barbeiro para o bucket público `barbers` no Supabase
+ * Storage. Retorna a URL pública (já liberada no next.config images).
+ * Usa service role (bypassa RLS) — protegido por requireRole("admin").
+ */
+export async function uploadBarberPhoto(
+  formData: FormData
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  await requireRole("admin");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0)
+    return { ok: false, error: "Nenhum arquivo enviado." };
+  const ext = PHOTO_EXT[file.type];
+  if (!ext)
+    return { ok: false, error: "Formato inválido. Use PNG, JPG, WEBP ou AVIF." };
+  if (file.size > MAX_PHOTO_BYTES)
+    return { ok: false, error: "Imagem muito grande (máx. 5 MB)." };
+
+  const admin = createAdminClient();
+  const key = `${randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error } = await admin.storage
+    .from("barbers")
+    .upload(key, buffer, { contentType: file.type, upsert: false });
+  if (error) return { ok: false, error: error.message };
+
+  const { data } = admin.storage.from("barbers").getPublicUrl(key);
+  return { ok: true, url: data.publicUrl };
 }
 
 // ----------------------------------------------------------------------------
