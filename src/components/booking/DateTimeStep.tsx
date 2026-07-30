@@ -64,7 +64,9 @@ export function DateTimeStep({
       `/api/availability?barberId=${encodeURIComponent(
         barberId
       )}&date=${ymd}&durationMinutes=${durationMinutes}`,
-      { signal: ctrl.signal }
+      // no-store: disponibilidade muda a cada agendamento; nunca servir do
+      // cache do browser, senão um horário recém-ocupado aparece livre.
+      { signal: ctrl.signal, cache: "no-store" }
     )
       .then(async (r) => {
         if (!r.ok) {
