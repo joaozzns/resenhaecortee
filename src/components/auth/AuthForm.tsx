@@ -14,6 +14,7 @@ import { PhoneInput } from "./PhoneInput";
 import { PasswordStrength } from "./PasswordStrength";
 import { GoogleIcon } from "./social-icons";
 import { createClient } from "@/lib/supabase/client";
+import { signUpConfirmed } from "@/lib/auth/actions";
 import {
   loginSchema,
   signupSchema,
@@ -239,30 +240,25 @@ function SignupForm() {
   const password = useWatch({ control, name: "password" });
 
   async function onSubmit(values: SignupInput) {
-    const { data, error } = await supabase.auth.signUp({
+    // Cria a conta já confirmada (sem depender de e-mail de confirmação).
+    const res = await signUpConfirmed({
+      fullName: values.fullName,
       email: values.email,
+      phone: values.phone,
       password: values.password,
-      options: {
-        // O trigger handle_new_user usa esses campos no raw_user_meta_data
-        // para preencher profiles.full_name e profiles.phone.
-        data: {
-          full_name: values.fullName,
-          phone: values.phone,
-        },
-        emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`,
-      },
     });
-    if (error) {
-      toast.error("Não consegui criar sua conta", {
-        description: error.message,
-      });
+    if (!res.ok) {
+      toast.error("Não consegui criar sua conta", { description: res.error });
+      if (res.alreadyExists) router.replace("/entrar");
       return;
     }
-    // Quando confirmação de e-mail está ativa, session vem null
-    if (!data.session) {
-      toast.success("Conta criada", {
-        description: "Enviamos um e-mail para você confirmar.",
-      });
+    // Conta pronta → loga direto.
+    const { error: signInErr } = await supabase.auth.signInWithPassword({
+      email: values.email,
+      password: values.password,
+    });
+    if (signInErr) {
+      toast.success("Conta criada", { description: "Faça login para entrar." });
       router.replace("/entrar");
       return;
     }
