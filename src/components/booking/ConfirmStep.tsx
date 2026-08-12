@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, CheckCircle2, UserCircle2, AlertCircle, LockKeyhole } from "lucide-react";
+import { Loader2, CheckCircle2, UserCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,9 +39,6 @@ export function ConfirmStep({
   user: CurrentUser | null;
   onSuccess: (id: string, cancelToken: string) => void;
 }) {
-  const router = useRouter();
-  const isLogged = !!user;
-
   const selectedServices = services.filter((s) =>
     state.serviceIds.includes(s.id)
   );
@@ -180,29 +176,16 @@ export function ConfirmStep({
           </div>
         </aside>
 
-        {/* Formulário */}
+        {/* Formulário — visitante ou logado */}
         <div className="lg:col-span-7 lg:order-1">
-          {isLogged ? (
-            <LoggedFlow
-              form={loggedForm}
-              onSubmit={submit}
-              submitting={submitting}
-              user={user}
-            />
-          ) : (
-            <AccountRequired
-              onGoTo={(path) => {
-                if (typeof window !== "undefined") {
-                  const redirect = encodeURIComponent(
-                    window.location.pathname + window.location.search
-                  );
-                  router.push(`${path}?redirect=${redirect}`);
-                }
-              }}
-            />
-          )}
+          <BookingForm
+            form={loggedForm}
+            onSubmit={submit}
+            submitting={submitting}
+            user={user}
+          />
 
-          {isLogged && submitError && (
+          {submitError && (
             <p className="mt-4 flex items-start gap-2 text-sm text-danger">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
               {submitError}
@@ -215,10 +198,10 @@ export function ConfirmStep({
 }
 
 // ============================================================================
-// Sub: usuário logado
+// Sub: formulário de agendamento (visitante ou logado)
 // ============================================================================
 
-function LoggedFlow({
+function BookingForm({
   form,
   onSubmit,
   submitting,
@@ -227,7 +210,7 @@ function LoggedFlow({
   form: ReturnType<typeof useForm<LoggedForm>>;
   onSubmit: (v: LoggedForm) => void;
   submitting: boolean;
-  user: CurrentUser;
+  user: CurrentUser | null;
 }) {
   const {
     register,
@@ -240,17 +223,25 @@ function LoggedFlow({
       <div className="rounded-[var(--radius-lg)] border border-border bg-accent-soft/30 p-4 flex items-center gap-3">
         <UserCircle2 className="h-6 w-6 text-accent shrink-0" aria-hidden />
         <div className="flex-1 text-sm">
-          Agendando como{" "}
-          <strong className="text-foreground">
-            {user.profile?.full_name ?? user.email}
-          </strong>
-          .{" "}
-          <Link
-            href="/auth/signout"
-            className="text-accent hover:underline"
-          >
-            não é você?
-          </Link>
+          {user ? (
+            <>
+              Agendando como{" "}
+              <strong className="text-foreground">
+                {user.profile?.full_name ?? user.email}
+              </strong>
+              .{" "}
+              <Link href="/auth/signout" className="text-accent hover:underline">
+                não é você?
+              </Link>
+            </>
+          ) : (
+            <>
+              Você não precisa de conta para agendar — é só preencher abaixo.{" "}
+              <Link href="/entrar" className="text-accent hover:underline">
+                Já tem conta? Entrar
+              </Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -288,56 +279,6 @@ function LoggedFlow({
         Confirmar agendamento
       </Button>
     </form>
-  );
-}
-
-// ============================================================================
-// Sub: visitante sem conta — agendamento bloqueado
-// ============================================================================
-
-function AccountRequired({
-  onGoTo,
-}: {
-  onGoTo: (path: "/entrar" | "/cadastrar") => void;
-}) {
-  return (
-    <div className="rounded-[var(--radius-lg)] border border-border bg-surface p-6 md:p-8 space-y-6">
-      <div className="flex items-start gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft/40 text-accent">
-          <LockKeyhole className="h-5 w-5" aria-hidden />
-        </div>
-        <div className="space-y-1.5">
-          <h3 className="font-display text-xl md:text-2xl">
-            É preciso ter uma conta para agendar.
-          </h3>
-          <p className="text-sm md:text-base text-foreground/70 leading-relaxed">
-            Não é possível agendar horário sem uma conta. Crie a sua ou entre
-            para confirmar seu horário — seus dados do agendamento ficam salvos
-            e você volta exatamente para esta etapa.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button
-          type="button"
-          size="lg"
-          className="w-full sm:flex-1"
-          onClick={() => onGoTo("/cadastrar")}
-        >
-          Criar conta
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="w-full sm:flex-1"
-          onClick={() => onGoTo("/entrar")}
-        >
-          Já tenho conta — Entrar
-        </Button>
-      </div>
-    </div>
   );
 }
 

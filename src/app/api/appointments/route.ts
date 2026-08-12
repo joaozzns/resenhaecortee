@@ -31,18 +31,14 @@ export async function POST(req: NextRequest) {
   }
   const input = parsed.data;
 
-  // 0. Autenticação obrigatória — não é possível agendar sem conta.
+  // 0. Autenticação OPCIONAL — agendamento de visitante é permitido.
+  //    Logado → vincula ao usuário; visitante → client_id null (o schema
+  //    cobre o caso guest: client_name/phone/email são obrigatórios).
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json(
-      { error: "É necessário ter uma conta para agendar um horário." },
-      { status: 401 }
-    );
-  }
-  const clientId = user.id;
+  const clientId = user?.id ?? null;
 
   const admin = createAdminClient();
 
