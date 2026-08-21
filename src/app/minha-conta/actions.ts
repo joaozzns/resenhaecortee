@@ -19,12 +19,80 @@ async function requireOwnAppointment(appointmentId: string) {
   const admin = createAdminClient();
   const { data: appt, error } = await admin
     .from("appointments")
-    .select("id, client_id, status, starts_at")
+    .select("id, client_id, status, starts_at, ends_at, barber_id")
     .eq("id", appointmentId)
     .single();
   if (error || !appt) throw new Error("Agendamento não encontrado.");
   if (appt.client_id !== user.id) throw new Error("Sem permissão.");
   return { user, appt, admin };
+}
+
+/**
+ * Reagenda (move) o MESMO agendamento para um novo horário, em vez de criar
+ * um segundo — resolve o problema de "ficar com 2 horários".
+ * Mantém o barbeiro e a duração; re-checa conflito ignorando o próprio id.
+ */
+export async function rescheduleMyAppointment(
+  appointmentId: string,
+  newStartsAtUtc: string
+) {
+  const { admin, appt } = await requireOwnAppointment(appointmentId);
+  if (appt.status === "cancelled") {
+    return { ok: false, error: "Agendamento cancelado não pode ser remarcado." };
+  }
+  const newStart = new Date(newStartsAtUtc);
+  if (isNaN(newStart.getTime())) {
+    return { ok: false, error: "Horário inválido." };
+  }
+  if (differenceInHours(newStart, new Date()) < MIN_LEAD_HOURS) {
+    return {
+      ok: false,
+      error: `Escolha um horário com pelo menos ${MIN_LEAD_HOURS}h de antecedência.`,
+    };
+  }
+  const durationMs =
+    new Date(appt.ends_at).getTime() - new Date(appt.starts_at).getTime();
+  const newEnd = new Date(newStart.getTime() + durationMs);
+
+  // Conflito com OUTROS agendamentos do mesmo barbeiro (ignora o próprio).
+  const { data: clash } = await admin
+    .from("appointments")
+    .select("id")
+    .eq("barber_id", appt.barber_id)
+    .neq("status", "cancelled")
+    .neq("id", appointmentId)
+    .lt("starts_at", newEnd.toISOString())
+    .gt("ends_at", newStart.toISOString())
+    .limit(1);
+  if (clash && clash.length > 0) {
+    return { ok: false, error: "Esse horário já está ocupado. Escolha outro." };
+  }
+
+  // Conflito com bloqueios (folga/almoço) do barbeiro.
+  const { data: bl } = await admin
+    .from("time_blocks")
+    .select("id")
+    .eq("barber_id", appt.barber_id)
+    .lt("starts_at", newEnd.toISOString())
+    .gt("ends_at", newStart.toISOString())
+    .limit(1);
+  if (bl && bl.length > 0) {
+    return { ok: false, error: "Barbeiro indisponível nesse horário." };
+  }
+
+  const { error } = await admin
+    .from("appointments")
+    .update({
+      starts_at: newStart.toISOString(),
+      ends_at: newEnd.toISOString(),
+    })
+    .eq("id", appointmentId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/minha-conta");
+  revalidatePath("/minha-conta/agendamentos");
+  revalidatePath("/admin/agendamentos");
+  return { ok: true };
 }
 
 export async function cancelMyAppointment(appointmentId: string) {

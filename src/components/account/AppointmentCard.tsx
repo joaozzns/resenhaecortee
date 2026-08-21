@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { formatDistanceToNow, isPast } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -17,7 +17,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { AppointmentWithDetails } from "@/lib/account/queries";
 import { siteConfig } from "@/lib/site";
-import { cancelMyAppointment, rateMyAppointment } from "@/app/minha-conta/actions";
+import {
+  cancelMyAppointment,
+  rateMyAppointment,
+  rescheduleMyAppointment,
+} from "@/app/minha-conta/actions";
+import { DateTimeStep } from "@/components/booking/DateTimeStep";
+import type { Slot } from "@/lib/booking/availability";
 import { formatBRL } from "@/lib/utils";
 import { fmtBRT } from "@/lib/date";
 import { cn } from "@/lib/utils";
@@ -47,6 +53,7 @@ export function AppointmentCard({
 }) {
   const [pending, startTransition] = useTransition();
   const [showRate, setShowRate] = useState(false);
+  const [showReschedule, setShowReschedule] = useState(false);
 
   const startsAt = new Date(appointment.starts_at);
   const past = isPast(startsAt);
@@ -175,8 +182,14 @@ export function AppointmentCard({
                 WhatsApp
               </a>
             </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href={repeatHref}>Reagendar</Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowReschedule(true)}
+            >
+              <Clock className="h-4 w-4" aria-hidden />
+              Reagendar
             </Button>
             <Button
               type="button"
@@ -226,7 +239,128 @@ export function AppointmentCard({
           onDone={() => setShowRate(false)}
         />
       )}
+
+      {showReschedule && (
+        <RescheduleModal
+          appointment={appointment}
+          onClose={() => setShowReschedule(false)}
+        />
+      )}
     </article>
+  );
+}
+
+function RescheduleModal({
+  appointment,
+  onClose,
+}: {
+  appointment: AppointmentWithDetails;
+  onClose: () => void;
+}) {
+  const [slot, setSlot] = useState<Slot | null>(null);
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  // Duração pelos serviços; fallback pela diferença starts/ends do original.
+  const duration =
+    appointment.services.reduce((s, x) => s + (x.duration_minutes ?? 0), 0) ||
+    Math.round(
+      (new Date(appointment.ends_at).getTime() -
+        new Date(appointment.starts_at).getTime()) /
+        60000
+    );
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  function confirm() {
+    if (!slot) return;
+    startTransition(async () => {
+      const r = await rescheduleMyAppointment(appointment.id, slot.startsAtUtc);
+      if (!r.ok) toast.error("Não consegui remarcar", { description: r.error });
+      else {
+        toast.success("Horário alterado.");
+        onClose();
+      }
+    });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center p-3 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Reagendar horário"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+        aria-label="Fechar"
+        onClick={onClose}
+      />
+      <div className="relative z-10 flex max-h-[92dvh] w-full max-w-3xl flex-col rounded-[var(--radius-lg)] border border-border bg-surface shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3.5 sm:px-6">
+          <div>
+            <h2 className="font-display text-base font-semibold sm:text-lg">
+              Reagendar
+            </h2>
+            <p className="text-xs text-muted">
+              Atual: {fmtBRT(appointment.starts_at, "dd/MM 'às' HH:mm")} ·{" "}
+              {appointment.barber?.name ?? "—"}
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar">
+            <X className="h-4 w-4" aria-hidden />
+          </Button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+          <DateTimeStep
+            hideHeader
+            barberId={appointment.barber_id}
+            durationMinutes={duration}
+            selectedDate={pickedDate}
+            selectedTime={slot?.time ?? null}
+            onSelectSlot={(date, s) => {
+              setPickedDate(date);
+              setSlot(s);
+            }}
+          />
+        </div>
+
+        <div className="flex gap-2 border-t border-border p-4 sm:justify-end sm:px-6">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="flex-1 sm:flex-none"
+          >
+            Voltar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={confirm}
+            disabled={!slot || pending}
+            className="flex-1 sm:flex-none"
+          >
+            {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+            Confirmar novo horário
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 

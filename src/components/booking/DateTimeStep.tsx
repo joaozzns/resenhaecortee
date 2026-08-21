@@ -26,12 +26,15 @@ export function DateTimeStep({
   selectedDate,
   selectedTime,
   onSelectSlot,
+  hideHeader = false,
 }: {
   barberId: string;
   durationMinutes: number;
   selectedDate: string | null;
   selectedTime: string | null;
   onSelectSlot: (date: string, slot: Slot) => void;
+  /** Oculta o cabeçalho "Passo 3" — usado ao reaproveitar no reagendamento. */
+  hideHeader?: boolean;
 }) {
   const [date, setDate] = useState<Date | undefined>(
     selectedDate ? new Date(`${selectedDate}T12:00:00`) : undefined
@@ -97,18 +100,20 @@ export function DateTimeStep({
 
   return (
     <div className="space-y-8">
-      <header className="space-y-3">
-        <span className="eyebrow flex items-center gap-3">
-          <span className="gold-rule" /> Passo 3
-        </span>
-        <h2 className="text-3xl md:text-4xl font-display">
-          Quando você quer vir?
-        </h2>
-        <p className="text-foreground/70 text-sm md:text-base leading-relaxed max-w-2xl">
-          Escolha primeiro o dia, depois o horário. Mostramos só o que está
-          livre — nada de surpresa.
-        </p>
-      </header>
+      {!hideHeader && (
+        <header className="space-y-3">
+          <span className="eyebrow flex items-center gap-3">
+            <span className="gold-rule" /> Passo 3
+          </span>
+          <h2 className="text-3xl md:text-4xl font-display">
+            Quando você quer vir?
+          </h2>
+          <p className="text-foreground/70 text-sm md:text-base leading-relaxed max-w-2xl">
+            Escolha primeiro o dia, depois o horário. Mostramos só o que está
+            livre — nada de surpresa.
+          </p>
+        </header>
+      )}
 
       <div className="grid lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5">
