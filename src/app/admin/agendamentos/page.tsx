@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { formatBRL } from "@/lib/utils";
 import { fmtBRT, BRT_TZ } from "@/lib/date";
 import { buildAppointmentConfirmLink } from "@/lib/whatsapp";
+import { AgendaAppointment } from "@/components/admin/AgendaAppointment";
 
 export const metadata = { title: "Agenda" };
 
@@ -25,34 +26,6 @@ const HOURS_FALLBACK = [
   "18:00",
   "19:00",
 ];
-
-const STATUS_STYLE = {
-  pending: {
-    border: "border-amber-400/80",
-    dot: "bg-amber-400",
-    timeText: "text-amber-400",
-  },
-  confirmed: {
-    border: "border-success/80",
-    dot: "bg-success",
-    timeText: "text-success",
-  },
-  completed: {
-    border: "border-accent/80",
-    dot: "bg-accent",
-    timeText: "text-accent",
-  },
-  no_show: {
-    border: "border-muted/60",
-    dot: "bg-muted",
-    timeText: "text-muted",
-  },
-  cancelled: {
-    border: "border-danger/80",
-    dot: "bg-danger",
-    timeText: "text-danger",
-  },
-} as const;
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
@@ -112,7 +85,7 @@ export default async function AdminCalendarPage({
     admin
       .from("appointments")
       .select(
-        "id, starts_at, ends_at, status, client_name, client_phone, total_cents, barber:barbers(name), services:appointment_services(service:services(name, price_cents))"
+        "id, starts_at, ends_at, status, client_id, client_name, client_phone, client_email, total_cents, barber:barbers(name), services:appointment_services(service:services(name, price_cents))"
       )
       .gte("starts_at", startMonday.toISOString())
       .lt("starts_at", addDays(startMonday, 7).toISOString())
@@ -229,40 +202,27 @@ export default async function AdminCalendarPage({
                     >
                       <div className="space-y-1.5">
                         {items.map((it) => {
-                          const cfg = STATUS_STYLE[it.status as keyof typeof STATUS_STYLE] ?? STATUS_STYLE.confirmed;
+                          /* eslint-disable @typescript-eslint/no-explicit-any */
+                          const ix = it as any;
+                          /* eslint-enable @typescript-eslint/no-explicit-any */
                           return (
-                            <div
+                            <AgendaAppointment
                               key={it.id}
-                              title={`${fmtBRT(it.starts_at, "HH:mm")} · ${it.client_name} · ${formatBRL(it.total_cents)}`}
-                              className={
-                                "group rounded-md border-l-2 p-2 bg-surface text-foreground transition-colors hover:bg-surface-2 " +
-                                cfg.border
-                              }
-                            >
-                              <div className="flex items-baseline justify-between gap-1.5 mb-0.5">
-                                <span
-                                  className={
-                                    "font-display text-sm tabular-nums leading-none " +
-                                    cfg.timeText
-                                  }
-                                >
-                                  {fmtBRT(it.starts_at, "HH:mm")}
-                                </span>
-                                <span
-                                  aria-hidden
-                                  className={
-                                    "inline-block h-1.5 w-1.5 rounded-full " +
-                                    cfg.dot
-                                  }
-                                />
-                              </div>
-                              <p className="font-medium text-[11px] leading-tight truncate">
-                                {it.client_name}
-                              </p>
-                              <p className="text-[10px] text-muted tabular-nums leading-tight mt-0.5">
-                                {formatBRL(it.total_cents)}
-                              </p>
-                            </div>
+                              appt={{
+                                id: it.id,
+                                starts_at: it.starts_at,
+                                status: it.status,
+                                client_id: ix.client_id ?? null,
+                                client_name: it.client_name,
+                                client_phone: it.client_phone,
+                                client_email: ix.client_email ?? null,
+                                barber_name: ix.barber?.name ?? null,
+                                total_cents: it.total_cents,
+                                services: ((ix.services as unknown[]) ?? [])
+                                  .map((s) => (s as { service?: { name: string; price_cents: number } }).service)
+                                  .filter(Boolean) as { name: string; price_cents: number }[],
+                              }}
+                            />
                           );
                         })}
                       </div>
