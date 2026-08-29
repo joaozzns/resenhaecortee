@@ -45,7 +45,7 @@ const supabase = createClient<Database>(url, key, {
 // Sem `description` — os nomes falam por si na UI.
 // Durações em minutos (múltiplos de 15).
 const SERVICES = [
-  { name: "Corte",                   duration_minutes: 30, price_cents: 3500,  category: "cabelo"     as const, sort_order: 1 },
+  { name: "Corte",                   duration_minutes: 60, price_cents: 3500,  category: "cabelo"     as const, sort_order: 1 },
   { name: "Freestyle",               duration_minutes: 15, price_cents: 500,   category: "cabelo"     as const, sort_order: 2 },
   { name: "Sobrancelha",             duration_minutes: 15, price_cents: 1000,  category: "tratamento" as const, sort_order: 3 },
   { name: "Barba",                   duration_minutes: 30, price_cents: 2500,  category: "barba"      as const, sort_order: 4 },
